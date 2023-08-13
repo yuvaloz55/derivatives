@@ -1,0 +1,43 @@
+import requests
+import json
+import pandas as pd
+
+# Specify the Excel file path that contains the symbols with their last 2 earnings dates
+excel_path = r"C:\Users\yuval\Documents\SymbolsDates.xlsx"
+
+# Read the Excel file into a DataFrame
+df = pd.read_excel(excel_path)
+
+# Initialize an empty list to store responses
+all_responses = []
+
+# Iterate over each row in the DataFrame
+for index, row in df.iterrows():
+    try:
+        # Extract symbol and trade date from the current row
+        symbol = row['Symbol']
+        trade_date = row['Dates']
+
+        # Build the URL for the API request
+        url = f'https://api.orats.io/datav2/hist/strikes?token=a1b207b6-d7fe-473f-a341-bef8ee0c29c7&ticker={symbol}&tradeDate={trade_date}&dte=14,70&delta=0.00005,0.99995'
+
+        # Make the API request
+        response = requests.get(url)
+        response_data = response.json()
+
+        # Extract the "data" array from the response
+        data_list = response_data.get("data", [])
+
+        # Append each data dictionary to the list of responses
+        all_responses.extend(data_list)
+    except Exception as e:
+        print(f"Error processing symbol {symbol}: {str(e)}")
+
+# Convert the list of dictionaries to a DataFrame
+response_df = pd.DataFrame(all_responses)
+
+# Print the resulting DataFrame
+# print(response_df)
+
+# Export the DataFrame to an Excel file
+response_df.to_excel('SymbolsStrike.xlsx', index=False)
